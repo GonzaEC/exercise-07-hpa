@@ -1,1 +1,46 @@
-# TODO: Deployment with 2 replicas, resource requests/limits
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-registry
+  labels:
+    app: node-registry
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: node-registry
+  template:
+    metadata:
+      labels:
+        app: node-registry
+    spec:
+      containers:
+        - name: node-registry
+          image: ghcr.io/unlu-sd2026/exercise-07-hpa:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: node-registry-secret
+                  key: database-url
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
